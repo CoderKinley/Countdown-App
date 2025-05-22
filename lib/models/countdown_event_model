@@ -1,0 +1,63 @@
+class CountDown {
+  final String id; 
+  final String title;
+  final DateTime eventDate;
+  final TimeOfDay notificationTime;
+  final RepeatType repeatType;
+  final List<ReminderOffset> reminders;
+  final DateTime createdAt;
+  final bool isCompleted;
+  final String? imagePath; 
+
+  CountDown({
+    required this.id,
+    required this.title,
+    required this.eventDate,
+    required this.notificationTime,
+    this.repeatType = RepeatType.none,
+    this.reminders = const [
+      ReminderOffset.onEventDay,
+      ReminderOffset.oneDayBefore,
+      ReminderOffset.threeDaysBefore,
+      ReminderOffset.sevenDaysBefore,
+    ],
+    DateTime? createdAt,
+    this.isCompleted = false,
+    this.imagePath,
+  }) : createdAt = createdAt ?? DateTime.now();
+
+  // Convert to/from JSON for storage (Firebase, Hive, etc.) and also i am gonna use the local storage for storing teh data dumbass
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'title': title,
+        'eventDate': eventDate.toIso8601String(),
+        'notificationTime': {
+          'hour': notificationTime.hour,
+          'minute': notificationTime.minute,
+        },
+        'repeatType': repeatType.index,
+        'reminders': reminders.map((e) => e.index).toList(),
+        'createdAt': createdAt.toIso8601String(),
+        'isCompleted': isCompleted,
+        'imagePath': imagePath,
+      };
+
+  factory CountDown.fromJson(Map<String, dynamic> json) {
+    return CountDown(
+      id: json['id'],
+      title: json['title'],
+      eventDate: DateTime.parse(json['eventDate']),
+      notificationTime: TimeOfDay(
+        hour: json['notificationTime']['hour'],
+        minute: json['notificationTime']['minute'],
+      ),
+      repeatType: RepeatType.values[json['repeatType']],
+      reminders: (json['reminders'] as List)
+          .map((e) => ReminderOffset.values[e])
+          .toList(),
+      createdAt: DateTime.parse(json['createdAt']),
+      isCompleted: json['isCompleted'],
+      imagePath: json['imagePath'],
+    );
+  }
+}
