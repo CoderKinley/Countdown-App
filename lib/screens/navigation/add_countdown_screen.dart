@@ -70,7 +70,15 @@ class _AddCountdownScreenState extends State<AddCountdownScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const AddImageScreen(),
+                    builder: (context) {
+                      return AddImageScreen(
+                        days: CalculateDay.getDayDifference(_selectedDate),
+                        label: _label,
+                        date: _dateController.text,
+                        title: _titleCard,
+                        backgroundImagePath: 'assets/images/ourImage.jpg',
+                      );
+                    },
                   ),
                 );
               }
