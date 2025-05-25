@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:to_do_list/helper/calculate_day.dart';
+import 'package:to_do_list/models/reminder_offset.dart';
 import 'package:to_do_list/models/repeat_type.dart';
 import 'package:to_do_list/screens/navigation/add_image_screen.dart';
 import 'package:to_do_list/utils/extensions.dart';
+import 'package:to_do_list/widgets/countdown_detailed_card_widget.dart';
 
 class AddCountdownScreen extends StatefulWidget {
   const AddCountdownScreen({super.key});
@@ -19,6 +22,28 @@ class _AddCountdownScreenState extends State<AddCountdownScreen> {
   DateTime? _selectedDate;
   RepeatType? _selectedRepeatType;
   bool _isChecked = false;
+  String _label = "Day To";
+  String _eventDate = "";
+  String _titleCard = "";
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+
+    _titleController.addListener(() {
+      setState(() {
+        _titleCard = _titleController.text;
+      });
+    });
+
+    _dateController.addListener(() {
+      setState(() {
+        _eventDate = _dateController.text;
+      });
+    });
+  }
+
   @override
   void dispose() {
     _titleController.dispose();
@@ -65,7 +90,13 @@ class _AddCountdownScreenState extends State<AddCountdownScreen> {
                   ),
                   width: double.infinity,
                   height: 300,
-                  child: Center(child: Text("Hello World")),
+                  child: CountdownDetailedCardWidget(
+                    days: CalculateDay.getDayDifference(_selectedDate),
+                    label: _label,
+                    date: _dateController.text,
+                    title: _titleCard,
+                    backgroundImagePath: 'assets/images/ourImage.jpg',
+                  ),
                 ),
                 const SizedBox(height: 10),
                 Container(
@@ -130,16 +161,28 @@ class _AddCountdownScreenState extends State<AddCountdownScreen> {
                           },
                         ),
                         const SizedBox(height: 20),
-                        CheckboxListTile(
-                          contentPadding: EdgeInsets.all(0),
-                          title: Text("Reminder Notification"),
-                          value: _isChecked,
-                          onChanged: (value) {
-                            setState(() {
-                              _isChecked = value!;
-                            });
-                          },
+                        MediaQuery.removePadding(
+                          context: context,
+                          removeLeft: true,
+                          removeRight: true,
+                          removeTop: true,
+                          removeBottom: true,
+                          child: ListTile(
+                            contentPadding:
+                                EdgeInsets.zero, // also ensure this is zero
+                            leading: Icon(Icons.notification_add),
+                            title: Text("Notification Reminder"),
+                            trailing: Switch(
+                              value: _isChecked,
+                              onChanged: (value) {
+                                setState(() {
+                                  _isChecked = value;
+                                });
+                              },
+                            ),
+                          ),
                         ),
+
                         const SizedBox(height: 20),
                         Visibility(
                           visible: _isChecked,
@@ -151,19 +194,42 @@ class _AddCountdownScreenState extends State<AddCountdownScreen> {
                                   readOnly: true,
                                   decoration: InputDecoration(
                                     hintText: "Reminder Time",
-                                    hintStyle: TextStyle(color: Colors.grey),
-                                    border: UnderlineInputBorder(),
+                                    enabledBorder: OutlineInputBorder(
+                                      borderSide: BorderSide(
+                                        color: Colors.grey[800]!,
+                                      ),
+                                    ),
+                                    filled: true,
+                                    fillColor: Colors.grey[800],
+                                    hintStyle: TextStyle(color: Colors.white),
                                     suffixIcon: Icon(Icons.alarm),
                                   ),
                                   onTap: () {
                                     _selectTime(context);
                                   },
                                 ),
-                                const SizedBox(height: 10),
-                                _notificationCard(),
-                                _notificationCard(),
-                                _notificationCard(),
-                                _notificationCard(),
+                                const SizedBox(height: 20),
+                                LayoutBuilder(
+                                  builder: (context, constraints) {
+                                    // Adjust crossAxisCount based on screen width
+                                    int crossAxisCount =
+                                        constraints.maxWidth > 250 ? 3 : 2;
+
+                                    return GridView.count(
+                                      physics: AlwaysScrollableScrollPhysics(),
+                                      shrinkWrap: true,
+                                      crossAxisCount: crossAxisCount,
+                                      crossAxisSpacing: 1,
+                                      mainAxisSpacing: 1,
+                                      childAspectRatio: 4,
+                                      padding: EdgeInsets.all(0),
+                                      children:
+                                          ReminderOffset.values.map((offset) {
+                                            return _notificationCard(offset);
+                                          }).toList(),
+                                    );
+                                  },
+                                ),
                               ],
                             ),
                           ),
@@ -180,8 +246,26 @@ class _AddCountdownScreenState extends State<AddCountdownScreen> {
     );
   }
 
-  _notificationCard() {
-    return Card(child: Text("Notificatoion Card"));
+  Widget _notificationCard(ReminderOffset offset) {
+    return Card(
+      color: Colors.blueGrey[900],
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0),
+        child: Row(
+          children: [
+            Icon(Icons.check, color: Colors.white),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                offset.displayName,
+                style: TextStyle(color: Colors.white),
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   // show the panel from the below to rise above
@@ -264,22 +348,6 @@ class _AddCountdownScreenState extends State<AddCountdownScreen> {
       setState(() {
         _notificationController.text = "${picked.hour}:${picked.minute}";
       });
-    }
-  }
-
-  IconData _getRepeatIcon(RepeatType type) {
-    switch (type) {
-      case RepeatType.daily:
-        return Icons.calendar_today;
-      case RepeatType.weekly:
-        return Icons.calendar_view_week;
-      case RepeatType.monthly:
-        return Icons.calendar_view_month;
-      case RepeatType.yearly:
-        return Icons.calendar_today;
-      case RepeatType.none:
-      default:
-        return Icons.not_interested;
     }
   }
 
