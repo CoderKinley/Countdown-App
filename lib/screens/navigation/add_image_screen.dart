@@ -1,4 +1,7 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:sliding_up_panel/sliding_up_panel.dart';
 import 'package:to_do_list/widgets/countdown_detailed_card_widget.dart';
 
@@ -23,11 +26,19 @@ class AddImageScreen extends StatefulWidget {
 }
 
 class _AddImageScreenState extends State<AddImageScreen> {
+  final ImagePicker _picker = ImagePicker();
+  late String _imagePath;
+
+  @override
+  void initState() {
+    super.initState();
+    _imagePath = widget.backgroundImagePath;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       extendBodyBehindAppBar: true,
-
       appBar: AppBar(backgroundColor: Colors.transparent),
       body: SlidingUpPanel(
         backdropEnabled: true,
@@ -35,10 +46,8 @@ class _AddImageScreenState extends State<AddImageScreen> {
         backdropColor: Colors.black,
         color: Colors.transparent,
         boxShadow: const [],
-        minHeight: 60, // visible when collapsed
-        maxHeight:
-            MediaQuery.of(context).size.height *
-            0.6, // slide up to 85% of screen height
+        minHeight: 60,
+        maxHeight: MediaQuery.of(context).size.height * 0.6,
         panel: Container(
           decoration: BoxDecoration(
             color: Colors.black.withOpacity(0.6),
@@ -70,14 +79,12 @@ class _AddImageScreenState extends State<AddImageScreen> {
               ),
               const SizedBox(height: 20),
               ElevatedButton(
-                onPressed: () {
-                  // Add your image selection logic here
-                },
+                onPressed: _pickImage,
                 style: ElevatedButton.styleFrom(
                   elevation: 0,
                   backgroundColor: const Color.fromARGB(255, 30, 30, 30),
                   shadowColor: Colors.transparent,
-                  padding: EdgeInsets.all(0),
+                  padding: EdgeInsets.zero,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                     side: BorderSide.none,
@@ -103,7 +110,7 @@ class _AddImageScreenState extends State<AddImageScreen> {
             label: widget.label,
             date: widget.date,
             title: widget.title,
-            backgroundImagePath: widget.backgroundImagePath,
+            backgroundImagePath: _imagePath,
           ),
         ),
       ),
@@ -111,21 +118,34 @@ class _AddImageScreenState extends State<AddImageScreen> {
   }
 
   Widget _ShowImageCart(String imagePath) {
+    final isFile = File(imagePath).existsSync();
     return Card(
-      clipBehavior:
-          Clip.antiAlias, // ensures image clips to the rounded corners
+      clipBehavior: Clip.antiAlias,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: SizedBox(
         width: 120,
         height: 200,
-        child: Image.asset(
-          imagePath,
-          fit: BoxFit.cover, // fills the entire card
-        ),
+        child:
+            isFile
+                ? Image.file(File(imagePath), fit: BoxFit.cover)
+                : Image.asset(imagePath, fit: BoxFit.cover),
       ),
     );
   }
+
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(
+      source: ImageSource.gallery,
+    );
+
+    if (pickedFile != null) {
+      setState(() {
+        _imagePath = pickedFile.path;
+      });
+    }
+  }
 }
+
 
 // reference for teh sliding up panel
 // https://flutterappworld.com/a-draggable-flutter-widget-that-makes-implementing-a-slidinguppanel-much-easier/
